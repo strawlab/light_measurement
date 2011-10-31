@@ -5,6 +5,12 @@ import threading
 import Queue
 import numpy as np
 import primitives
+import sys
+
+if sys.platform.startswith('win'):
+    time_func = time.clock
+else:
+    time_func = time.time
 
 class SerialWatcher(object):
     def __init__(self,serial=None):
@@ -85,7 +91,7 @@ class FindMinMaxValues( State ):
         self.max_label.draw()
 
     def update(self,dt):
-        t = time.time()
+        t = time_func()
         x = (np.sin(t*2*np.pi*self.flicker_freq_hz)+1)*0.5
         self.patch.color=(x,x,x,1.0)
         if self.serial_watcher is not None:
@@ -124,7 +130,7 @@ class MeasureLatency( State ):
         self.holdoff_time = 0.1 # 100 msec
         self.substate = dict(cmd='wait until',
                              old_cmd='white->black',
-                             until=time.time()+self.holdoff_time)
+                             until=time_func()+self.holdoff_time)
         self._clear_latencies()
         self.label = pyglet.text.Label(('Detecting latencies. '
                                         'Press "c" to clear measured values.'
@@ -156,7 +162,7 @@ class MeasureLatency( State ):
                                }
 
     def update(self,dt):
-        t = time.time()
+        t = time_func()
         cmd = self.substate['cmd']
         this_samples = self.serial_watcher.get()
         if cmd == 'wait until':
@@ -267,7 +273,7 @@ class MyAppWindow(pyglet.window.Window):
         self.instruction_label.draw()
         self.status_label.draw()
 
-        t = time.time()
+        t = time_func()
         self.f_count += 1
         if self.f_count==0:
             self.first_t = t
@@ -296,7 +302,12 @@ class MyAppWindow(pyglet.window.Window):
         self._make_state(NextStateClass,kwargs=kwargs)
 
 def main():
-    window = MyAppWindow(vsync=False)
+    if sys.platform.startswith('win'):
+        port = 'COM3'
+    elif sys.platform.startswith('linux'):
+        port = '/dev/ttyUSB0'
+
+    window = MyAppWindow(port=port,vsync=False)
     pyglet.app.run()
 
 if __name__=='__main__':
