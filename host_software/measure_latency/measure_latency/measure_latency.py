@@ -4,8 +4,10 @@ import time
 import threading
 import Queue
 import numpy as np
-import primitives
+import measure_latency.primitives as primitives
 import sys
+
+__version__ = '1.0' # keep in sync with setup.py
 
 if sys.platform.startswith('win'):
     time_func = time.clock
